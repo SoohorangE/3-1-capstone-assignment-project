@@ -28,32 +28,38 @@ class Generator:
 
         print(f"사용 중인 장치: {self.device}")
 
-        if self.device == "cuda":
-            # nvidia에서만 가능
-            self.quantization_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_use_double_quant=True
-            )
+        # if self.device == "cuda":
+        #     # nvidia에서만 가능
+        #     self.quantization_config = BitsAndBytesConfig(
+        #         load_in_4bit=True,
+        #         bnb_4bit_compute_dtype=torch.float16,
+        #         bnb_4bit_quant_type="nf4",
+        #         bnb_4bit_use_double_quant=True
+        #     )
+        #
+        #     self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+        #     self.model = AutoModelForCausalLM.from_pretrained(
+        #         self.model_id,
+        #         torch_dtype=torch.float16,
+        #         trust_remote_code=True,
+        #         low_cpu_mem_usage=True,
+        #         quantization_config=self.quantization_config
+        #     )
+        # else:
+        #     self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+        #     self.model = AutoModelForCausalLM.from_pretrained(
+        #         self.model_id,
+        #         torch_dtype=torch.float32,
+        #         trust_remote_code=True,
+        #         low_cpu_mem_usage=True
+        #     ).to(device=self.device)
 
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_id,
-                torch_dtype=torch.float16,
-                trust_remote_code=True,
-                low_cpu_mem_usage=True,
-                quantization_config=self.quantization_config
-            ).to(device=self.device)
-
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_id,
-                torch_dtype=torch.float32,
-                trust_remote_code=True,
-                low_cpu_mem_usage=True
-            ).to(device=self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_id,
+            torch_dtype=torch.bfloat16,
+            trust_remote_code=True
+        ).to(device=self.device)
 
     def generate_model(self, request):
         input_ids = self.tokenizer.apply_chat_template(

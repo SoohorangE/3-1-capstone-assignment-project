@@ -3,7 +3,7 @@
 }
 .chat-box {
   height:300px;
-  max-height: 500px;
+  max-height: 700px;
   overflow-y: auto;
   padding: 5px 10px; /* 패딩 줄임 */
   border: 1px solid #ddd;

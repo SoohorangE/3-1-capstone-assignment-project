@@ -1,9 +1,11 @@
 // 대화 기록을 localStorage에서 불러오거나 새로 시작
 
-let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory")) || [{
+let conversationHistory = [{
     "role": "system",
-    "content": "모든 답변은 반드시 한국어로 해주세요"
+    "content": "모든 답변은 반드시 한국어로 해주세요, 또한 정확한 정보를 제공해야하며 정확하지 않으면, 틀릴수도 있다고 사용자에게 알려주세요."
 }];
+
+localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
 // 30개 이하로 유지
 function trimHistory() {
@@ -36,7 +38,7 @@ function generateText() {
     $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
 
     // 응답 자리 마련
-    const loadingMsg = `<div class="message"><div class="model-message"><strong>모델:</strong> ⏳ Generating...</div></div>`;
+    const loadingMsg = `<div class="message"><div class="model-message"><strong>모델:</strong> ⏳ 답변 생성중...</div></div>`;
     $("#chat-box").append(loadingMsg);
 
     // 서버 요청
@@ -74,11 +76,4 @@ function generateText() {
 
 function clearChat() {
     $("#chat-box").empty();  // 대화 기록 삭제
-
-    let conversationHistory = JSON.parse([{
-    "role": "system",
-    "content": "모든 답변은 반드시 한국어로 해주세요"
-    }]);
-
-    localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 }
