@@ -1,0 +1,32 @@
+.container {
+  max-width: 1000px; /* 화면 너비 확장 */
+}
+.chat-box {
+  height:300px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 5px 10px; /* 패딩 줄임 */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  margin-bottom: 20px;
+}
+.message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.user-message {
+  background-color: #d1ecf1;
+  padding: 10px;
+  border-radius: 8px;
+  margin-right: auto; /* 사용자 메시지는 왼쪽에 위치 */
+  max-width: 70%; /* 메시지 크기 제한 */
+}
+.model-message {
+  background-color: #e2e3e5;
+  padding: 10px;
+  border-radius: 8px;
+  margin-left: auto; /* 모델의 답변은 오른쪽에 위치 */
+  max-width: 70%; /* 메시지 크기 제한 */
+}
