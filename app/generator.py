@@ -22,43 +22,23 @@ def get_device():
 
 class Generator:
     def __init__(self):
-        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+        os.environ["TOKENIZERS_PARALLELISM"] = "true"
         self.model_id = "LGAI-EXAONE/EXAONE-3.5-2.4B-Instruct"
         self.device = get_device()
 
         print(f"사용 중인 장치: {self.device}")
 
-        # if self.device == "cuda":
-        #     # nvidia에서만 가능
-        #     self.quantization_config = BitsAndBytesConfig(
-        #         load_in_4bit=True,
-        #         bnb_4bit_compute_dtype=torch.float16,
-        #         bnb_4bit_quant_type="nf4",
-        #         bnb_4bit_use_double_quant=True
-        #     )
-        #
-        #     self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
-        #     self.model = AutoModelForCausalLM.from_pretrained(
-        #         self.model_id,
-        #         torch_dtype=torch.float16,
-        #         trust_remote_code=True,
-        #         low_cpu_mem_usage=True,
-        #         quantization_config=self.quantization_config
-        #     )
-        # else:
-        #     self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
-        #     self.model = AutoModelForCausalLM.from_pretrained(
-        #         self.model_id,
-        #         torch_dtype=torch.float32,
-        #         trust_remote_code=True,
-        #         low_cpu_mem_usage=True
-        #     ).to(device=self.device)
+        if self.device == "cuda":
+            os.environ["TOKENIZERS_PARALLELISM"] = "true"
+        else:
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_id,
             torch_dtype=torch.bfloat16,
-            trust_remote_code=True
+            trust_remote_code=True,
+            low_cpu_mem_usage=True
         ).to(device=self.device)
 
     def generate_model(self, request):
@@ -69,13 +49,13 @@ class Generator:
             return_tensors="pt"
         )
 
-        outputs = self.model.generate(
-            input_ids.to(self.model.device),
-            max_new_tokens=512,
-            temperature=0.7,
-            top_p=0.9,
-            do_sample=True
-        )
+        # 추론 모드로 전환해서 좀 더 빠른 답변을 유도
+        with torch.inference_mode():
+            outputs = self.model.generate(
+                input_ids.to(self.model.device),
+                max_new_tokens=512,
+                do_sample=False
+            )
 
         generated_text = self.tokenizer.decode(outputs[0])
         response = extract_model_response(generated_text)

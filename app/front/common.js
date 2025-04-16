@@ -7,7 +7,7 @@ let conversationHistory = [
     },
     {
         "role": "system",
-        "content": "문장에 수학식이 포함되어 있을 경우 마크다운형식으로 출력 해주세요"
+        "content": "문장에 수학식이 포함되어 있을 경우 마크다운 형식으로 출력 해주세요"
     }
 ];
 
@@ -66,7 +66,7 @@ function generateText() {
             let parsedMarkdown = marked.parse(responseText);
 
             // 파싱된 마크다운을 HTML 템플릿에 삽입
-            const modelMessageHtml = `<div class="message"><div class="model-message"><strong>모델:</strong><br>${parsedMarkdown}</div></div>`;
+            const modelMessageHtml = `<div class="model-message"><strong>모델:</strong><br>${parsedMarkdown}</div>`;
 
             $("#chat-box .message").last().replaceWith(modelMessageHtml)
 
