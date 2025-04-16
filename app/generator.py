@@ -78,9 +78,7 @@ class Generator:
         )
 
         generated_text = self.tokenizer.decode(outputs[0])
-        print(generated_text)
         response = extract_model_response(generated_text)
 
-        print(response)
         return response
 

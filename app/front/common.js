@@ -1,16 +1,22 @@
 // 대화 기록을 localStorage에서 불러오거나 새로 시작
 
-let conversationHistory = [{
-    "role": "system",
-    "content": "모든 답변은 반드시 한국어로 해주세요, 또한 정확한 정보를 제공해야하며 정확하지 않으면, 틀릴수도 있다고 사용자에게 알려주세요."
-}];
+let conversationHistory = [
+    {
+        "role": "system",
+        "content": "모든 답변은 반드시 한국어로 해주세요, 또한 답변을 최대한 요약 해주세요"
+    },
+    {
+        "role": "system",
+        "content": "문장에 수학식이 포함되어 있을 경우 마크다운형식으로 출력 해주세요"
+    }
+];
 
 localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
-// 30개 이하로 유지
+// 5건 이하로 유지 2건은 시스템 정의 문장이므로 7개가 넘으면 삭제
 function trimHistory() {
-    if (conversationHistory.length > 30) {
-        conversationHistory = conversationHistory.slice(conversationHistory.length - 30);
+    if (conversationHistory.length > 7) {
+        conversationHistory = conversationHistory.slice(conversationHistory.length - 5);
     }
     localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 }
@@ -54,9 +60,26 @@ function generateText() {
         .then(response => response.json())
         .then(data => {
             const responseText = data.result || "❓ 응답이 없어요!";
-            const modelMessageHtml = `<div class="model-message"><strong>모델:</strong> ${responseText}</div>`;
-            $("#chat-box .message").last().html(modelMessageHtml)
 
+            console.log(responseText);
+
+            let parsedMarkdown = marked.parse(responseText);
+
+            // 파싱된 마크다운을 HTML 템플릿에 삽입
+            const modelMessageHtml = `<div class="message"><div class="model-message"><strong>모델:</strong><br>${parsedMarkdown}</div></div>`;
+
+            $("#chat-box .message").last().replaceWith(modelMessageHtml)
+
+            // 수식 렌더링
+            MathJax.typeset();
+
+            // 대화 저장
+            conversationHistory.push({
+                role: "assistant",
+                content: responseText
+            });
+
+            // 스크롤 최신 위치로
             $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
 
             // 모델 응답도 히스토리에 추가
@@ -76,4 +99,15 @@ function generateText() {
 
 function clearChat() {
     $("#chat-box").empty();  // 대화 기록 삭제
+
+    let conversationHistory = [
+        {
+            "role": "system",
+            "content": "모든 답변은 반드시 한국어로 해주세요, 또한 답변을 최대한 요약 해주세요"
+        },
+        {
+            "role": "system",
+            "content": "문장에 수학식이 포함되어 있을 경우 마크다운형식으로 출력 해주세요"
+        }
+    ];
 }
