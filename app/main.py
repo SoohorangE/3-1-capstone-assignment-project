@@ -38,9 +38,9 @@ async def read_index(request: Request):
 
 @app.post("/answer")
 async def answer(request: PromptRequest):
-    response = generator.generate_model(request)
+    response, summary = generator.generate_model(request)
 
-    return {"result": response}
+    return {"result": response, "summary":summary}
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)

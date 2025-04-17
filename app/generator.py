@@ -3,14 +3,18 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import os
 
 def extract_model_response(generated_text):
-    # [|assistant|]가 있는 부분부터 잘라내기
-    start_idx = generated_text.rfind("[|assistant|]")
-    if start_idx != -1:
-        # -13인 이유 마지막에 붙는 [|endofturn|] 제거를 위함
-        response = generated_text[start_idx + len("[|assistant|]"):-13].strip()
+    start_tag = "[|assistant|]"
+    end_tag = "[|endofturn|]"
+
+    start_idx = generated_text.rfind(start_tag)
+    end_idx = generated_text.rfind(end_tag)
+
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        response = generated_text[start_idx + len(start_tag):end_idx].strip()
         return response
     else:
-        return
+        response = generated_text[start_idx + len(start_tag):].strip()
+        return response
 
 def get_device():
     if torch.backends.mps.is_available():
@@ -60,5 +64,24 @@ class Generator:
         generated_text = self.tokenizer.decode(outputs[0])
         response = extract_model_response(generated_text)
 
-        return response
+        # 답변을 요약해서 대화 히스토리에 저장하기 위한 모델 추론 한번 더
+        instruction_summary = "다음은 사용자가 질문한 내용에 관한 답변이며 내용을 최대한 정리 해주세요.\n" + str(response)
+        input_ids2 = self.tokenizer.apply_chat_template(
+            [{"role": "user", "content": instruction_summary}],
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt"
+        )
+
+        with torch.inference_mode():
+            outputs = self.model.generate(
+                input_ids2.to(self.model.device),
+                max_new_tokens=128,
+                do_sample=False
+            )
+
+        generated_text = self.tokenizer.decode(outputs[0])
+        response_summary = extract_model_response(generated_text)
+
+        return response, response_summary
 

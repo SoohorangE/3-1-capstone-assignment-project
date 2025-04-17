@@ -167,4 +167,3 @@ dependencies:
       - uvicorn==0.34.1
       - yarl==1.19.0
       - zstandard==0.23.0
-prefix: C:\Users\Suho\miniconda3\envs\sllmproject
