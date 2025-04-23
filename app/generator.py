@@ -96,8 +96,5 @@ class Generator:
 
         gc.collect()
 
-        print(response)
-        print(response_summary)
-
         return response, response_summary
 
