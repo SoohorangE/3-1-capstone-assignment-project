@@ -1,6 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import os
+import gc
 
 def extract_model_response(generated_text):
     start_tag = "[|assistant|]"
@@ -42,7 +43,6 @@ class Generator:
             self.model_id,
             torch_dtype=torch.bfloat16,
             trust_remote_code=True,
-            low_cpu_mem_usage=True
         ).to(device=self.device)
 
     def generate_model(self, request):
@@ -53,19 +53,25 @@ class Generator:
             return_tensors="pt"
         )
 
-        # 추론 모드로 전환해서 좀 더 빠른 답변을 유도
-        with torch.inference_mode():
+        with torch.no_grad():
             outputs = self.model.generate(
                 input_ids.to(self.model.device),
-                max_new_tokens=512,
-                do_sample=False
+                max_new_tokens=1024,
+                do_sample=False,
+                eos_token_id=self.tokenizer.eos_token_id
             )
 
-        generated_text = self.tokenizer.decode(outputs[0])
+        generated_text = self.tokenizer.decode(outputs[0].detach().cpu())
+        del outputs
         response = extract_model_response(generated_text)
 
+        if self.device == "cuda": torch.cuda.empty_cache()
+        elif self.device == "mps": torch.mps.empty_cache()
+
+        gc.collect()
+
         # 답변을 요약해서 대화 히스토리에 저장하기 위한 모델 추론 한번 더
-        instruction_summary = "다음은 사용자가 질문한 내용에 관한 답변이며 내용을 최대한 정리 해주세요.\n" + str(response)
+        instruction_summary = "다음은 사용자가 질문한 내용에 관한 답변이며 3줄 이내로 질문과 내용을 최대한 정리 해주세요.\n" + str(response)
         input_ids2 = self.tokenizer.apply_chat_template(
             [{"role": "user", "content": instruction_summary}],
             tokenize=True,
@@ -73,15 +79,25 @@ class Generator:
             return_tensors="pt"
         )
 
-        with torch.inference_mode():
+        with torch.no_grad():
             outputs = self.model.generate(
                 input_ids2.to(self.model.device),
                 max_new_tokens=128,
-                do_sample=False
+                do_sample=False,
+                eos_token_id = self.tokenizer.eos_token_id
             )
 
-        generated_text = self.tokenizer.decode(outputs[0])
+        generated_text = self.tokenizer.decode(outputs[0].detach().cpu())
+        del outputs
         response_summary = extract_model_response(generated_text)
+
+        if self.device == "cuda": torch.cuda.empty_cache()
+        elif self.device == "mps": torch.mps.empty_cache()
+
+        gc.collect()
+
+        print(response)
+        print(response_summary)
 
         return response, response_summary
 

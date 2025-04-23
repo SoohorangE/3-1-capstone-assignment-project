@@ -1,14 +1,19 @@
 // 대화 기록을 localStorage에서 불러오거나 새로 시작
-
 let conversationHistory = [];
 localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
-// 10건 이하로 유지
-function trimHistory() {
-    if (conversationHistory.length > 10) {
-        conversationHistory = conversationHistory.slice(conversationHistory.length - 5);
-    }
-    localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
+// LaTeX 수식을 보호하기 위한 마커
+function protectLatex(text) {
+    return text.replace(/\\\((.*?)\\\)|\\\[(.*?)\\\]|\$\$(.*?)\$\$|\$(.*?)\$/gs, (match) => {
+        return `@@LATEX@@${btoa(match)}@@END@@`;
+    });
+}
+
+// 마킹된 LaTeX 수식을 원래대로 복원
+function restoreLatex(text) {
+    return text.replace(/@@LATEX@@(.*?)@@END@@/g, (_, encoded) => {
+        return atob(encoded);
+    });
 }
 
 function generateText() {
@@ -20,6 +25,7 @@ function generateText() {
       <div class="message">
         <div class="user-message"><strong>사용자:</strong> ${prompt}</div>
       </div>`;
+
     $("#chat-box").append(userMessageHtml);
 
     // 대화 기록에 사용자 메시지 추가
@@ -27,8 +33,6 @@ function generateText() {
         role: "user",
         content: prompt
     });
-
-    trimHistory();
 
     // 스크롤 최신 위치
     $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
@@ -49,14 +53,14 @@ function generateText() {
         })
         .then(response => response.json())
         .then(data => {
-            const responseText = data.result || "❓ 응답이 없어요!";
-            const summaryText = data.summary || "";
+            let responseText = data.response_result || "❓ 응답이 없어요!";
+            const summaryText = data.response_summary || "";
 
+            responseText = protectLatex(responseText)
             let parsedMarkdown = marked.parse(responseText);
+            parsedMarkdown = restoreLatex(parsedMarkdown)
 
-            // 파싱된 마크다운을 HTML 템플릿에 삽입
             const modelMessageHtml = `<div class="message"><div class="model-message"><strong>모델:</strong><br>${parsedMarkdown}</div></div>`;
-
             $("#chat-box .message").last().replaceWith(modelMessageHtml)
 
             // 수식 렌더링
@@ -70,9 +74,7 @@ function generateText() {
                 role: "assistant",
                 content: summaryText
             });
-            trimHistory();
 
-            console.log(conversationHistory)
         })
         .catch(error => {
             console.error("Error:", error);
@@ -86,4 +88,5 @@ function clearChat() {
     $("#chat-box").empty();  // 대화 기록 삭제
 
     let conversationHistory = [];
+    localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 }
