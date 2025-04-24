@@ -2,17 +2,28 @@
 let conversationHistory = [];
 localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
+
+// UTF-8 safe base64 encode
+function encodeBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+}
+
+// UTF-8 safe base64 decode
+function decodeBase64(str) {
+    return decodeURIComponent(escape(atob(str)));
+}
+
 // LaTeX 수식을 보호하기 위한 마커
 function protectLatex(text) {
     return text.replace(/\\\((.*?)\\\)|\\\[(.*?)\\\]|\$\$(.*?)\$\$|\$(.*?)\$/gs, (match) => {
-        return `@@LATEX@@${btoa(match)}@@END@@`;
+        return `@@LATEX@@${encodeBase64(match)}@@END@@`;
     });
 }
 
 // 마킹된 LaTeX 수식을 원래대로 복원
 function restoreLatex(text) {
     return text.replace(/@@LATEX@@(.*?)@@END@@/g, (_, encoded) => {
-        return atob(encoded);
+        return decodeBase64(encoded);
     });
 }
 
