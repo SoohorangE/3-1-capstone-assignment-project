@@ -24,7 +24,7 @@
   max-width: 70%; /* 메시지 크기 제한 */
 }
 .model-message {
-  background-color: #e2e3e5;
+  background-color: #f5e6da ;
   padding: 10px;
   border-radius: 8px;
   margin-left: auto; /* 모델의 답변은 오른쪽에 위치 */
