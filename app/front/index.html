@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Detection - Modern UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // 다크 모드 기본 설정 (OS 설정 따르기)
+        tailwind.config = {
+            darkMode: 'media',
+        }
+    </script>
+    <style>
+        /* 파일 입력창에 파일이 드래그되었을 때 시각적 피드백 */
+        .drag-over {
+            border-color: #3b82f6; /* Tailwind blue-500 */
+            background-color: #eff6ff; /* Tailwind blue-50 */
+        }
+        .dark .drag-over {
+            border-color: #60a5fa; /* Tailwind blue-400 */
+            background-color: #1e293b; /* Tailwind slate-800 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
+    <div class="w-full max-w-lg p-8 space-y-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">화재 탐지 영상 업로드</h1>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">분석할 영상을 업로드해주세요.</p>
+        </div>
+
+        <form id="upload-form" class="space-y-6">
+            <div>
+                <label for="file-input" class="flex flex-col items-center justify-center w-full h-64 px-4 py-6 text-center bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer dark:bg-gray-700 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all" id="drop-zone">
+                    <svg class="w-12 h-12 mx-auto text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span class="mt-4 text-sm font-medium text-gray-600 dark:text-gray-300">
+                        여기에 파일을 드래그하거나 <span class="text-blue-600 dark:text-blue-400">클릭하여 업로드</span>
+                    </span>
+                    <span class="mt-1 text-xs text-gray-500 dark:text-gray-400" id="file-name">최대 100MB의 동영상 파일</span>
+                    <input type="file" name="file" id="file-input" accept="video/*" class="hidden" required>
+                </label>
+            </div>
+            <button type="submit" class="w-full px-4 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600" id="submit-button">
+                탐지 시작
+            </button>
+        </form>
+
+        <div id="status-container" class="text-center mt-6">
+            <div id="loader" class="hidden mx-auto border-4 border-gray-200 rounded-full w-14 h-14 border-t-4 border-t-blue-600 animate-spin"></div>
+            <div id="result-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const loader = document.getElementById('loader');
+        const resultContainer = document.getElementById('result-container');
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const fileNameDisplay = document.getElementById('file-name');
+        const submitButton = document.getElementById('submit-button');
+
+        const MAX_FILE_SIZE_BYTES = 200 * 1024 * 1024; // 100 MB
+
+        // 파일 선택/변경 시 호출될 함수
+        function handleFileChange() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileNameDisplay.textContent = file.name;
+
+                // 파일 크기 검사
+                if (file.size > MAX_FILE_SIZE_BYTES) {
+                    resultContainer.innerHTML = `<p class="text-red-500 font-semibold">파일 크기는 100MB를 초과할 수 없습니다.</p>`;
+                    submitButton.disabled = true;
+                } else {
+                    // 문제가 없으면 메시지 지우고 버튼 활성화
+                    if (resultContainer.innerHTML.includes('파일 크기는')) {
+                        resultContainer.innerHTML = '';
+                    }
+                    submitButton.disabled = false;
+                }
+            }
+        }
+
+        fileInput.addEventListener('change', handleFileChange);
+
+        // 드래그 앤 드롭 이벤트
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('video/')) {
+                fileInput.files = files;
+                handleFileChange(); // 파일 변경 핸들러 호출
+            } else {
+                 resultContainer.innerHTML = `<p class="text-yellow-500 font-semibold">비디오 파일만 업로드할 수 있습니다.</p>`;
+            }
+        });
+
+        // 폼 제출 이벤트
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (fileInput.files.length === 0) {
+                resultContainer.innerHTML = `<p class="text-red-500 font-semibold">업로드할 파일을 선택해주세요.</p>`;
+                return;
+            }
+
+            if (fileInput.files[0].size > MAX_FILE_SIZE_BYTES) {
+                resultContainer.innerHTML = `<p class="text-red-500 font-semibold">파일 크기가 너무 큽니다. 100MB 이하의 영상을 선택해주세요.</p>`;
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = '탐지 중...';
+            loader.classList.remove('hidden');
+            resultContainer.innerHTML = '';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/detect-fire/', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const videoUrl = URL.createObjectURL(blob);
+                    resultContainer.innerHTML = `
+                        <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">탐지 결과 영상</h2>
+                        <video controls class="w-full rounded-lg shadow-md" src="${videoUrl}"></video>
+                    `;
+                } else {
+                    // 서버로부터 받은 JSON 오류 메시지 표시
+                    const errorData = await response.json();
+                    resultContainer.innerHTML = `<p class="text-red-500">오류 발생: ${errorData.detail || response.statusText}</p>`;
+                }
+            } catch (error) {
+                resultContainer.innerHTML = `<p class="text-red-500">네트워크 오류가 발생했습니다. 서버 상태를 확인해주세요.</p>`;
+            } finally {
+                loader.classList.add('hidden');
+                submitButton.disabled = false;
+                submitButton.textContent = '탐지 시작';
+            }
+        });
+    </script>
+</body>
+</html>
