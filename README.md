@@ -131,7 +131,28 @@ YOLOv8 모델 화재 감지 및 추적
 
 ---
 
-## 9. 향후 개선 방향
+## 9. 제출 형식
+
+📺 **시연 영상**
+
+- 제출 형태: YouTube 링크
+- 영상 길이: 약 9분
+- 내용: 깃허브에서 주소 가져옴 -> 실행 환경 구성 -> 동영상에서 추론 및 결과 동영상 재생
+- 예시 링크: https://youtu.be/5aRMB0I0e9c
+
+📎 **부록(동작 화면 제출)**
+
+### FastAPI 서버 실행 캡처
+- ![실행결과](pic/1.png)
+- ![실행결과](pic/2.png)
+- ![실행결과](pic/3.png)
+
+### 분석 결과 화면
+- ![실행결과4](pic/4.png)
+
+---
+
+## 10. 향후 개선 방향
 
 1.  **실시간 스트리밍 분석 기능 추가**: 현재는 동영상 파일 분석에 중점을 두지만, 향후 CCTV 등 실시간 스트리밍 영상을 직접 받아 분석하는 기능으로 확장.
 2.  **화재 발생 시점 및 지속 시간 분석**: 동영상 내에서 화재가 처음 감지된 시점과 지속 시간을 정량적으로 분석하여 리포트 제공.
@@ -139,7 +160,7 @@ YOLOv8 모델 화재 감지 및 추적
 
 ---
 
-## 10. 참고 자료 (References)
+## 11. 참고 자료 (References)
 
 - **YOLO (You Only Look Once):** [https://github.com/ultralytics/ultralytics](https://github.com/ultralytics/ultralytics)
 - **Dataset:** [https://www.kaggle.com/datasets/sayedgamal99/smoke-fire-detection-yolo](https://www.kaggle.com/datasets/sayedgamal99/smoke-fire-detection-yolo)
