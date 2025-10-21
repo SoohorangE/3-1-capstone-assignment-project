@@ -91,12 +91,6 @@ YOLOv8 모델 화재 감지 및 추적
 | **정확도(mAP@50)** | **73.8%** |
 | **평균 추론 시간** | 1 프레임 당 평균 30 ~ 35ms (RTX 3080 기준) |
 
-### 혼동 행렬 (Confusion Matrix)
-
-`train4` 학습 실행 결과로 생성된 혼동 행렬입니다. 모델이 'fire'와 'smoke' 클래스를 얼마나 잘 분류했는지 보여줍니다.
-
-![Confusion Matrix](runs/detect/train4/confusion_matrix.png)
-
 ---
 
 ## 6. 모델 학습 방법 (How to Train)
