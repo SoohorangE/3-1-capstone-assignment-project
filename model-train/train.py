@@ -13,6 +13,5 @@ if __name__ == '__main__':
     # Export the model to ONNX format
     model.export()
 
-#건들지 마세요 사나워요 물어요
 
 
